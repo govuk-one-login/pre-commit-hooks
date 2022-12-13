@@ -1,0 +1,25 @@
+- id: gradle-spotless-apply
+  name: Run Gradle Spotless Apply
+  language: script
+  entry: bin/precommit-gradle.sh
+  types_or:
+    - java
+    - groovy
+  pass_filenames: false
+  require_serial: true
+- id: terraform-format
+  name: Run Terraform Format
+  language: script
+  entry: bin/precommit-terraform-format.sh
+  types:
+    - terraform
+  pass_filenames: true
+  require_serial: true
+- id: terraform-validate
+  name: Run Terraform Validate (can take a minute or two)
+  language: script
+  entry: bin/precommit-terraform-validate.sh
+  types:
+    - terraform
+  pass_filenames: true
+  require_serial: true
