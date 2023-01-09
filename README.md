@@ -54,13 +54,13 @@ To use this script:
       - id: terraform-format
 ```
 
-If `terraform-format` modifies any files, the pre-commit hook will fail. 
+If `terraform-format` modifies any files, the pre-commit hook will fail.
 
 N.B. this hook will run against all files in the directory, not just files changed in the commit.
 
 #### Terraform Version
 
-The hook will attempt to determine the Terraform version to use by looking for `.terraform-version` either in the 
+The hook will attempt to determine the Terraform version to use by looking for `.terraform-version` either in the
 directory containing the changed Terraform files or its parent directory (similar to `tfenv`). If a specific version
 cannot be determined it will pull the Docker image with the `latest` tag.
 
@@ -80,4 +80,3 @@ To use this script:
 ```
 
 As discussed above the hook will attempt to auto-detect the Terraform version.
-
