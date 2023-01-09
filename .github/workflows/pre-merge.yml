@@ -1,0 +1,22 @@
+name: Pre-merge checks
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+
+jobs:
+  pre-commit-autoupdate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Pull Repository
+        uses: actions/checkout@v3
+      - name: Autoupdate
+        uses: ./.github/actions/autoupdate
+        with:
+          github_token: ${{ github.token }}
