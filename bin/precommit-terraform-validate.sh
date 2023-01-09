@@ -36,4 +36,3 @@ for DIR in $(echo "$@" | xargs -n1 dirname | sort -u | uniq); do
 
   runTerraformValidate "${DIR}"
 done
-
