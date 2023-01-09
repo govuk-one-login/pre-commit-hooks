@@ -1,0 +1,75 @@
+name: "Pre-commit Hook autoupdate"
+description: "Runs pre-commit autoupdate to ensure we are up to date (Dependabot currently doesn't support pre-commit hook updates)"
+inputs:
+  github_token:
+    description: "Github Token with contents: write and pull-request: write permissions"
+    required: true
+  main_branch:
+    description: "The name of the main branch"
+    required: false
+    default: "main"
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install Pre-commit
+      run: python -m pip install pre-commit
+      shell: bash
+
+    - name: Lock versions
+      run: python -m pip freeze --local
+      shell: bash
+
+    - name: Pre-commit cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ env.pythonLocation }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+    - name: Run pre-commit autoupdate
+      run: pre-commit autoupdate
+      shell: bash
+
+    - name: Get repo status
+      id: repo-status
+      continue-on-error: true
+      shell: bash
+      run: |
+        if git diff --quiet; then 
+          echo "status=clean" >> "$GITHUB_OUTPUT" 
+        else 
+          echo "status=dirty" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Raise PR if changes
+      if: steps.repo-status.outputs.status == 'dirty'
+      shell: bash
+      env:
+        FILE_TO_COMMIT: .pre-commit-config.yaml
+        GH_TOKEN: ${{ inputs.github_token }}
+      run: |
+        export DESTINATION_BRANCH="bau-pre-commit-autoupdate-$(date +"%Y-%m-%dT%H%M%S")"
+        export BRANCH_RESULT="$(gh api --method POST /repos/{owner}/{repo}/git/refs \
+          --field ref="refs/heads/${DESTINATION_BRANCH}" \
+          --field sha="${{ github.sha }}")"
+
+        export SHA="$(git rev-parse ${{ github.sha }}:${FILE_TO_COMMIT})"
+        export MESSAGE="BAU: pre-commit autoupdate $(date +"%Y-%m-%dT%H:%M")"
+        export CONTENT="$(base64 -i "${FILE_TO_COMMIT}")"
+        
+        export COMMIT="$(gh api --method PUT /repos/{owner}/{repo}/contents/${FILE_TO_COMMIT} \
+          --field message="${MESSAGE}" \
+          --field content="${CONTENT}" \
+          --field encoding="base64" \
+          --field branch="${DESTINATION_BRANCH}" \
+          --field sha="${SHA}")"
+        
+        gh api --method POST /repos/{owner}/{repo}/pulls \
+          --field title="${MESSAGE}" \
+          --field body="Updates for pre-commit config detected on $(date +"%d/%m/%Y")" \
+          --field head="${DESTINATION_BRANCH}" \
+          --field base="${{ inputs.main_branch }}"
