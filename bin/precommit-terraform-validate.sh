@@ -8,6 +8,7 @@ function runTerraformValidate() {
   export TF_DATA_DIR="/data/build/pre-commit/${1}"
 
   docker run \
+    --rm \
     -v "$(pwd):/data" \
     -e TF_DATA_DIR \
     -e TF_IN_AUTOMATION=1 \
@@ -16,6 +17,7 @@ function runTerraformValidate() {
     init -backend=false
 
   docker run \
+    --rm \
     -v "$(pwd):/data" \
     -e TF_DATA_DIR \
     -e TF_IN_AUTOMATION=1 \
